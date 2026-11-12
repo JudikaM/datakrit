@@ -31,6 +31,25 @@ def test_readme_sample_output_shows_the_package_version():
     assert shown == {__version__}
 
 
+def test_readme_downloads_and_status_name_the_package_version():
+    """The download button and links point to this version's release files, and the status
+    line names its major.minor: both must move with every release."""
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    base = "https://github.com/JudikaM/datakrit/releases/download/"
+    setup = f"{base}v{__version__}/Datakrit-{__version__}-windows-x64-setup.exe"
+    assert f'<a href="{setup}"><picture>' in text  # the button at the top
+    assert text.count(setup) == 2  # the button and the installation steps
+    links = re.findall(re.escape(base) + r"v([^/]+)/[A-Za-z]+-([^-]+)-", text)
+    assert links and set(links) == {(__version__, __version__)}
+    for theme in ("light", "dark"):
+        image = ROOT / "docs" / "images" / f"download-windows-{theme}.svg"
+        svg = image.read_text(encoding="utf-8")
+        assert "<title" in svg and "Download for Windows" in svg and "monitor-down" in svg
+        assert f"docs/images/download-windows-{theme}.svg" in text
+    status = re.search(r"^\*\*Status:\*\* (\d+\.\d+)\.", text, flags=re.M)
+    assert status and status.group(1) == ".".join(__version__.split(".")[:2])
+
+
 def test_interface_assets_are_package_data():
     static = resources.files("datakrit").joinpath("ui_static")
     page = static.joinpath("index.html").read_text(encoding="utf-8")

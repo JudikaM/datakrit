@@ -22,6 +22,15 @@ Datakrit was called CSV Tidy until 1.2.0.
 [Configuration](https://github.com/JudikaM/datakrit/blob/main/docs/CONFIGURATION.md) ·
 [Changelog](https://github.com/JudikaM/datakrit/blob/main/CHANGELOG.md)
 
+<br>
+
+<a href="https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64-setup.exe"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JudikaM/datakrit/main/docs/images/download-windows-dark.svg">
+  <img src="https://raw.githubusercontent.com/JudikaM/datakrit/main/docs/images/download-windows-light.svg" width="316" height="68" alt="Download Datakrit 2.2.0 for Windows (installer, 64-bit)">
+</picture></a>
+
+<sub>Version 2.2.0 · [Check the file before you run it](https://github.com/JudikaM/datakrit/blob/main/README.md#windows-app-no-python-needed) · [Zip, no install needed](https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64.zip) · [All ways to install](https://github.com/JudikaM/datakrit/blob/main/README.md#installation)</sub>
+
 </div>
 
 <picture>
@@ -36,7 +45,7 @@ and numeric dates such as `DD/MM/YYYY`. It never guesses: it repairs only what y
 reports everything else with record and line locations, and refuses to export a result that
 still has errors.
 
-**Status:** 2.1. Profiles, command-line options, exit codes, issue codes, JSON reports, and
+**Status:** 2.2. Profiles, command-line options, exit codes, issue codes, JSON reports, and
 the Python API follow Semantic Versioning; [docs/STABILITY.md](https://github.com/JudikaM/datakrit/blob/main/docs/STABILITY.md) lists
 exactly what stays compatible in 2.x. The look and layout of the local interface are not part
 of that promise. Coming from an earlier version? See the upgrade section near the end, or
@@ -105,9 +114,10 @@ console window. It opens in its own window (an app window of Microsoft Edge, whi
 10 and 11 include) and stops when you close that window or press **Quit**. For the
 `datakrit` command or the Python API, install from PyPI instead.
 
-1. Open the latest release on the
-   [Releases page](https://github.com/JudikaM/datakrit/releases) and download the installer
-   `Datakrit-2.2.0-windows-x64-setup.exe`.
+1. Download the installer
+   [`Datakrit-2.2.0-windows-x64-setup.exe`](https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64-setup.exe)
+   (about 10 MB). It is also listed with every release on the
+   [Releases page](https://github.com/JudikaM/datakrit/releases), next to its SHA-256.
 2. Check the file. In PowerShell, in the folder that holds the download, run
 
    ```powershell
@@ -130,7 +140,9 @@ replaces the installed version, and profiles keep working. To remove it, use **S
 Apps > Installed apps > Datakrit > Uninstall**. If Edge (or Google Chrome) is missing, the
 app opens its page in your default browser instead.
 
-Without installing: `Datakrit-2.2.0-windows-x64.zip` holds the same app as a folder. Check
+Without installing:
+[`Datakrit-2.2.0-windows-x64.zip`](https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64.zip)
+holds the same app as a folder. Check
 its hash in the same way, unzip it, and double-click `Datakrit\Datakrit.exe`; to update,
 replace the folder. The `licenses` folder of the app holds the license notices of Datakrit
 and of the software the app bundles.

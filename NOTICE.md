@@ -4,8 +4,10 @@ Datakrit is released under the MIT License (see `LICENSE`). The local interface
 (`src/datakrit/ui_static/index.html` and `src/datakrit/ui_static/app.js`, in the wheel, the
 sdist, and the Windows app) draws icons as inline SVG paths taken from the Lucide icon set.
 Lucide marks some of its icons as derived from the Feather project; the interface uses icons
-of both kinds (for example `chevron-down` and `moon` are derived from Feather). Their
-copyright and license notices follow in full.
+of both kinds (for example `chevron-down` and `moon` are derived from Feather). The download
+button of the README (`docs/images/download-windows-light.svg` and
+`download-windows-dark.svg`) draws Lucide's `monitor-down` icon. Their copyright and license
+notices follow in full.
 
 ## Lucide
 

@@ -37,7 +37,11 @@ def test_readme_downloads_and_status_name_the_package_version():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     base = "https://github.com/JudikaM/datakrit/releases/download/"
     setup = f"{base}v{__version__}/Datakrit-{__version__}-windows-x64-setup.exe"
-    assert f'<a href="{setup}"><picture>' in text  # the button at the top
+    # The button at the top: the link's tag alone on its line makes the link and the picture
+    # one HTML block. With `<a ...><picture>` on one line GitHub reads a paragraph, leaves the
+    # image outside the link, and links the image to itself instead of the download.
+    assert f'\n<a href="{setup}">\n<picture>\n' in text
+    assert "\n</picture>\n</a>\n" in text
     assert text.count(setup) == 2  # the button and the installation steps
     links = re.findall(re.escape(base) + r"v([^/]+)/[A-Za-z]+-([^-]+)-", text)
     assert links and set(links) == {(__version__, __version__)}

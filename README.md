@@ -26,7 +26,7 @@ Datakrit was called CSV Tidy until 1.2.0.
 
 <a href="https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64-setup.exe"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/JudikaM/datakrit/main/docs/images/download-windows-dark.svg">
-  <img src="https://raw.githubusercontent.com/JudikaM/datakrit/main/docs/images/download-windows-light.svg" width="316" height="68" alt="Download Datakrit 2.2.0 for Windows (installer, 64-bit)">
+  <img src="https://raw.githubusercontent.com/JudikaM/datakrit/main/docs/images/download-windows-light.svg" width="248" height="52" alt="Download Datakrit 2.2.0 for Windows (installer, 64-bit)">
 </picture></a>
 
 <sub>Version 2.2.0 · [Check the file before you run it](https://github.com/JudikaM/datakrit/blob/main/README.md#windows-app-no-python-needed) · [Zip, no install needed](https://github.com/JudikaM/datakrit/releases/download/v2.2.0/Datakrit-2.2.0-windows-x64.zip) · [All ways to install](https://github.com/JudikaM/datakrit/blob/main/README.md#installation)</sub>

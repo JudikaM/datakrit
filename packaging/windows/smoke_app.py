@@ -188,20 +188,25 @@ def registered() -> bool:
 
 def shortcuts() -> list[Path]:
     """The Start Menu and Desktop shortcuts that the installer makes."""
-    folders = powershell(
+    listing = powershell(
         "[Environment]::GetFolderPath('Programs'); [Environment]::GetFolderPath('Desktop')"
-    ).split()
+    )
+    # One folder per line: the folders hold spaces ("Start Menu").
+    folders = [line.strip() for line in listing.splitlines() if line.strip()]
     check(len(folders) == 2, "the Start Menu and Desktop folders could not be read")
     return [Path(folder) / "Datakrit.lnk" for folder in folders]
 
 
-def install(setup: Path, work: Path, timeout: float) -> Path:
+def check_not_installed() -> None:
     check(
         not registered(),
         "Datakrit is already installed for this user; uninstall it first, or run the "
         "installer check on another computer",
     )
-    target = work / "installed"
+
+
+def install(setup: Path, target: Path, work: Path, timeout: float) -> Path:
+    """Install with ``setup`` into ``target``; return the installed Datakrit.exe."""
     done = subprocess.run(
         [
             str(setup),
@@ -226,8 +231,12 @@ def install(setup: Path, work: Path, timeout: float) -> Path:
 
 
 def uninstall(folder: Path, timeout: float) -> None:
+    uninstaller = folder / "unins000.exe"
+    if not uninstaller.is_file():
+        check(not registered(), "Settings > Apps lists Datakrit, but it has no uninstaller")
+        return
     subprocess.run(
-        [str(folder / "unins000.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
+        [str(uninstaller), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
         timeout=timeout,
         check=False,
     )
@@ -433,8 +442,10 @@ def main(argv: list[str] | None = None) -> int:
             if is_zip:
                 program = unzip(path, work)
             elif is_setup:
-                program = install(path, work, args.timeout)
-                installed = program.parent
+                check_not_installed()
+                # From here on, whatever the installer put in place is removed again.
+                installed = work / "installed"
+                program = install(path, installed, work, args.timeout)
             else:
                 program = path
             check(program.is_file(), f"{program} does not exist")

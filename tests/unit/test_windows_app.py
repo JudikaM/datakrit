@@ -206,6 +206,36 @@ def test_the_installer_installs_per_user_and_matches_its_checks(monkeypatch, tmp
         installer.find_iscc(None, {})
 
 
+def test_the_installer_check_reads_folders_with_spaces(monkeypatch):
+    smoke = load("smoke_app")
+    listing = "C:\\Users\\a b\\Start Menu\\Programs\r\nC:\\Users\\a b\\Desktop\r\n"
+    monkeypatch.setattr(smoke, "powershell", lambda script: listing)
+    assert smoke.shortcuts() == [
+        Path("C:\\Users\\a b\\Start Menu\\Programs\\Datakrit.lnk"),
+        Path("C:\\Users\\a b\\Desktop\\Datakrit.lnk"),
+    ]
+
+
+def test_a_failed_installer_check_uninstalls_what_it_installed(monkeypatch, tmp_path):
+    smoke = load("smoke_app")
+    setup = tmp_path / "Datakrit-2.2.0-windows-x64-setup.exe"
+    setup.write_bytes(b"MZ")
+    removed = []
+    monkeypatch.setattr(smoke, "uninstall", lambda folder, timeout: removed.append(folder))
+
+    def broken(setup, target, work, timeout):
+        raise smoke.SmokeError("a check after the installer ran failed")
+
+    monkeypatch.setattr(smoke, "install", broken)
+    monkeypatch.setattr(smoke, "registered", lambda: False)
+    assert smoke.main([str(setup)]) == 1
+    assert len(removed) == 1 and removed[0].name == "installed"
+    # Where Datakrit is installed already, the check stops and removes nothing.
+    monkeypatch.setattr(smoke, "registered", lambda: True)
+    assert smoke.main([str(setup)]) == 1
+    assert len(removed) == 1
+
+
 def test_releases_before_2_2_0_have_no_installer():
     from datakrit import update
 

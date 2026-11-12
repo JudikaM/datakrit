@@ -8,6 +8,14 @@ Datakrit was called CSV Tidy until 1.2.0.
 
 ## [Unreleased]
 
+### Changed
+
+- README: a **Download for Windows** button at the top links straight to the installer of
+  the current release (light and dark images in `docs/images/`, with Lucide's
+  `monitor-down` icon), next to links to the file check, the zip, and the other ways to
+  install. The installation steps link to the installer and the zip directly, and the status
+  line says 2.2. A test keeps those links and the status line on the package version.
+
 ## [2.2.0] - 2026-11-12
 
 The Windows app becomes a desktop app: an installer, and its own window. Commands,

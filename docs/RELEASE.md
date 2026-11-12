@@ -35,9 +35,11 @@ PyPI only once: PyPI refuses the same file name again, also after a deletion.
 ## Gates before the tag (all required)
 
 1. `CHANGELOG.md`: move the Unreleased entries under the new version and date.
-2. Update the version in `src/datakrit/__init__.py`, and the version shown in the README
-   (sample output and the file names in "Installation"; `tests/unit/test_release_metadata.py`
-   checks the sample output).
+2. Update the version in `src/datakrit/__init__.py`, and the version shown in the README:
+   the sample output, the status line (major.minor), the **Download for Windows** button and
+   the links under it, and the file names and download links in "Installation".
+   `tests/unit/test_release_metadata.py` checks the sample output, the status line, and every
+   release download link. The button images carry no version.
 3. Locally, from a clean checkout: `python -m ruff check .`, `python -m ruff format --check .`,
    `python -m mypy`, `python -m pytest`, `node --check` on the interface scripts,
    `python -m build`, `python -m twine check --strict dist/*`,

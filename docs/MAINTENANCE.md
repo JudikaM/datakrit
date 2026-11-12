@@ -72,8 +72,10 @@ Candidates, to be prioritized by real user requests rather than built speculativ
   come from sessions described in [USER_TESTING.md](USER_TESTING.md).
 - A native file dialog for the local interface.
 - [x] A self-contained Windows executable: done in 2.1.1 (the Windows app,
-  `Datakrit-X.Y.Z-windows-x64.zip`, built by the `Windows app` workflow).
-- Code signing for the Windows app, so that SmartScreen does not warn on its first start
-  (open: needs a code-signing certificate or a signing service).
+  `Datakrit-X.Y.Z-windows-x64.zip`, built by the `Windows app` workflow), with an installer
+  and its own window from 2.2.0.
+- Code signing for the Windows app and its installer, so that SmartScreen does not warn
+  on their first start (open: needs a code-signing certificate or a signing service).
+- A download page for the Windows app with a one-click link to the latest installer.
 - macOS shortcuts.
 - Translations of messages/documentation if users need them.

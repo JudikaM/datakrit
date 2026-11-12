@@ -80,7 +80,7 @@ There are three ways to use the same engine:
 
 ## Installation
 
-There are three ways to install Datakrit. This README describes version 2.1.1; changes made
+There are three ways to install Datakrit. This README describes version 2.2.0; changes made
 after a release are listed under "Unreleased" in the [changelog](https://github.com/JudikaM/datakrit/blob/main/CHANGELOG.md).
 
 ### From PyPI
@@ -100,48 +100,56 @@ their own environment and puts them on your `PATH`.
 
 ### Windows app (no Python needed)
 
-The Windows app contains the local interface only: no Python, no terminal, and no console
-window. For the `datakrit` command or the Python API, install from PyPI instead.
+The Windows app is a desktop app for the local interface: no Python, no terminal, and no
+console window. It opens in its own window (an app window of Microsoft Edge, which Windows
+10 and 11 include) and stops when you close that window or press **Quit**. For the
+`datakrit` command or the Python API, install from PyPI instead.
 
 1. Open the latest release on the
-   [Releases page](https://github.com/JudikaM/datakrit/releases) and download
-   `Datakrit-2.1.1-windows-x64.zip`.
+   [Releases page](https://github.com/JudikaM/datakrit/releases) and download the installer
+   `Datakrit-2.2.0-windows-x64-setup.exe`.
 2. Check the file. In PowerShell, in the folder that holds the download, run
 
    ```powershell
-   Get-FileHash .\Datakrit-2.1.1-windows-x64.zip -Algorithm SHA256
+   Get-FileHash .\Datakrit-2.2.0-windows-x64-setup.exe -Algorithm SHA256
    ```
 
-   and compare the hash with the SHA-256 of the zip in the release notes. If they differ, do
-   not run the app; delete the file and download it again from the Releases page.
-3. Unzip the file (right-click, **Extract All...**), open the `Datakrit` folder, and
-   double-click `Datakrit.exe`. The local interface opens in your browser. It stops when you
-   press **Quit** on the page, or by itself 10 minutes after its page was closed.
+   and compare the hash with the SHA-256 of the installer in the release notes. If they
+   differ, do not run it; delete the file and download it again from the Releases page.
+3. Double-click the installer. It installs Datakrit for your Windows user only (no
+   administrator rights needed), adds **Datakrit** to the Start Menu and, if you tick the
+   box, to the Desktop. Start Datakrit from there.
 
 The app is not code-signed, so Windows SmartScreen may say "Windows protected your PC" the
 first time. Only for a file you downloaded from the official release page and checked as
 above: choose **More info**, then **Run anyway**. Never do this for a copy from anywhere
 else.
 
-To update the app, download the zip of the new release, check it in the same way, and
-replace the old `Datakrit` folder. Profiles keep working. The `licenses` folder inside it
-holds the license notices of Datakrit and of the software the app bundles.
+To update the app, run the installer of the new release, checked in the same way; it
+replaces the installed version, and profiles keep working. To remove it, use **Settings >
+Apps > Installed apps > Datakrit > Uninstall**. If Edge (or Google Chrome) is missing, the
+app opens its page in your default browser instead.
+
+Without installing: `Datakrit-2.2.0-windows-x64.zip` holds the same app as a folder. Check
+its hash in the same way, unzip it, and double-click `Datakrit\Datakrit.exe`; to update,
+replace the folder. The `licenses` folder of the app holds the license notices of Datakrit
+and of the software the app bundles.
 
 ### From the GitHub release (wheel) or a source checkout
 
 Requires Python 3.11 or newer. Every release on the
 [GitHub Releases page](https://github.com/JudikaM/datakrit/releases) also carries a wheel and
-a source distribution. Download the wheel `datakrit-2.1.1-py3-none-any.whl` from the latest
+a source distribution. Download the wheel `datakrit-2.2.0-py3-none-any.whl` from the latest
 release and install it inside a virtual environment:
 
 ```powershell
 py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install <path-to>\datakrit-2.1.1-py3-none-any.whl
+.\.venv\Scripts\python.exe -m pip install <path-to>\datakrit-2.2.0-py3-none-any.whl
 .\.venv\Scripts\datakrit.exe --version
 ```
 
 On Linux/macOS: `python3 -m venv .venv`, then
-`.venv/bin/python -m pip install <path-to>/datakrit-2.1.1-py3-none-any.whl`. You can also
+`.venv/bin/python -m pip install <path-to>/datakrit-2.2.0-py3-none-any.whl`. You can also
 install from a source checkout:
 
 Windows PowerShell (calling the virtual environment's programs directly, so the
@@ -256,7 +264,7 @@ normalize = ["amount", "date"]
 ### 1. Check
 
 ```text
-Datakrit 2.1.1 - check
+Datakrit 2.2.0 - check
 Verdict: FAILED - 2 errors found in the source file.
 Source: examples\transactions_fixable.csv
 Profile: examples\profiles\transactions-id.toml
@@ -310,7 +318,7 @@ JSON for pipelines (stdout contains only JSON; status messages go to stderr):
 ### 2. Preview a clean (dry run is the default)
 
 ```text
-Datakrit 2.1.1 - clean (dry run, nothing written)
+Datakrit 2.2.0 - clean (dry run, nothing written)
 Verdict: READY TO EXPORT - no errors remain in the cleaned result; 2 source problems repaired.
 ...
 Transformations (applied in this order):
@@ -508,7 +516,7 @@ step-by-step guide for first-time users is in
 ```
 
 ```text
-Datakrit 2.1.1 - batch clean (dry run, nothing written)
+Datakrit 2.2.0 - batch clean (dry run, nothing written)
 Verdict: 2 of 4 files need attention (2 with data errors).
 Profile: examples\profiles\transactions-id.toml
 

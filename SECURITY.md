@@ -36,8 +36,8 @@ analyzes the Python code and the interface's JavaScript; see
 ## Verifying downloads
 
 Every release on the [Releases page](https://github.com/JudikaM/datakrit/releases) lists the
-SHA-256 of its three files (the wheel, the sdist, and the Windows app's zip) in its release
-notes, and GitHub shows the same digest next to each file.
+SHA-256 of its files (the wheel, the sdist, and the Windows app's installer and zip) in its
+release notes, and GitHub shows the same digest next to each file.
 
 - **PyPI.** The files of `datakrit` on PyPI are the wheel and sdist of the GitHub release,
   byte for byte: GitHub Actions downloads them from the release, checks them against
@@ -48,12 +48,14 @@ notes, and GitHub shows the same digest next to each file.
   `python -m pip download datakrit==X.Y.Z --no-deps -d DIR`, then compare the SHA-256 of the
   file with the release notes.
 - **The Windows app.** In PowerShell:
-  `Get-FileHash .\Datakrit-X.Y.Z-windows-x64.zip -Algorithm SHA256`; on Linux or macOS:
-  `sha256sum --check Datakrit-X.Y.Z-windows-x64.zip.sha256`. Use the app only if the hash
-  equals the one in the release notes.
-- **The app is not code-signed.** Windows SmartScreen may therefore warn ("Windows protected
-  your PC") the first time it starts. Choose **More info** and **Run anyway** only for a zip
-  downloaded from the official Releases page whose hash you checked. A copy from anywhere
+  `Get-FileHash .\Datakrit-X.Y.Z-windows-x64-setup.exe -Algorithm SHA256` (or the zip); on
+  Linux or macOS: `sha256sum --check Datakrit-X.Y.Z-windows-x64-setup.exe.sha256`. Run the
+  installer or the app only if the hash equals the one in the release notes.
+- **The app and its installer are not code-signed.** Windows SmartScreen may therefore warn
+  ("Windows protected your PC", "Unknown publisher") the first time. Choose **More info**
+  and **Run anyway** only for a file downloaded from the official Releases page whose hash
+  you checked. The installer needs no administrator rights and installs for the current
+  user only. A copy from anywhere
   else, or one whose hash differs, may have been changed: delete it. Antivirus programs
   sometimes flag unsigned programs made with PyInstaller; such a report about the official
   file is welcome as an issue.
@@ -73,7 +75,9 @@ from another computer, from a web page of another origin, or without the session
 content being interpreted as HTML or script by the page; `datakrit update` installing a
 file other than the verified release wheel; files on PyPI or in the Windows app's zip that
 differ from the release's published hashes; the Windows app doing anything that
-`datakrit-ui` does not; shortcuts changing files they did not create; writing outside the requested output paths,
+`datakrit-ui` does not, other than showing its page in its own Edge or Chrome window; the
+installer writing outside the user's chosen folder, its shortcuts, and its Settings > Apps
+entry; shortcuts changing files they did not create; writing outside the requested output paths,
 overwriting input files, crashes or unbounded resource use on crafted input beyond the
 documented limits, and data being silently changed. Spreadsheet formula injection in CSV
 content is a known property of the CSV format (see the README); Datakrit reports values as

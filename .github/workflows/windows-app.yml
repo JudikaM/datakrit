@@ -1,9 +1,10 @@
 name: Windows app
 
-# Builds the Windows app (packaging/windows/) and smoke-tests it. Pull requests and `main`
-# keep the zip as a workflow artifact. For a release, run it by hand with the tag
-# (`gh workflow run windows-app.yml -f tag=vX.Y.Z`): it builds that tag and attaches the zip
-# and its .sha256 file to the tag's draft release (see docs/RELEASE.md).
+# Builds the Windows app (packaging/windows/): the zip and the installer, and smoke-tests
+# both, including the app's own window. Pull requests and `main` keep them as a workflow
+# artifact. For a release, run it by hand with the tag
+# (`gh workflow run windows-app.yml -f tag=vX.Y.Z`): it builds that tag and attaches the zip,
+# the installer, and their .sha256 files to the tag's draft release (see docs/RELEASE.md).
 
 on:
   push:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to build; its draft release receives the zip (e.g. v2.1.0)"
+        description: "Release tag to build; its draft release receives the app (e.g. v2.2.0)"
         required: true
         type: string
 
@@ -27,10 +28,12 @@ jobs:
   build:
     name: Build and smoke-test
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     outputs:
       zip: ${{ steps.build.outputs.zip }}
       sha256: ${{ steps.build.outputs.sha256 }}
+      setup: ${{ steps.installer.outputs.setup }}
+      setup_sha256: ${{ steps.installer.outputs.setup_sha256 }}
     steps:
       - name: Check the tag
         if: github.event_name == 'workflow_dispatch'
@@ -39,7 +42,7 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::'$TAG' is not a release tag such as v2.1.0"
+            echo "::error::'$TAG' is not a release tag such as v2.2.0"
             exit 1
           fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,17 +71,37 @@ jobs:
       - name: Build the app and its zip
         id: build
         run: python packaging/windows/build_app.py
-      - name: Smoke-test the zip
+      - name: Smoke-test the zip and the app window
         env:
           ZIP: dist-exe/${{ steps.build.outputs.zip }}
           SHA256: ${{ steps.build.outputs.sha256 }}
-        run: python packaging/windows/smoke_app.py "$env:ZIP" --sha256 "$env:SHA256"
+        run: python packaging/windows/smoke_app.py "$env:ZIP" --sha256 "$env:SHA256" --window
+      - name: Check the Inno Setup compiler of the runner image
+        # The runner image ships Inno Setup 6 (ISCC.exe); the installer script needs 6.x.
+        # Its version is read from the file: `ISCC /?` exits with 1 even when it works.
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $iscc -PathType Leaf)) {
+            Write-Output "::error::Inno Setup 6 is not installed on the runner"
+            exit 1
+          }
+          Write-Output "Inno Setup $((Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion)"
+      - name: Build the installer
+        id: installer
+        run: python packaging/windows/build_installer.py --iscc "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+      - name: Smoke-test the installer (install, run, uninstall)
+        env:
+          SETUP: dist-exe/${{ steps.installer.outputs.setup }}
+          SHA256: ${{ steps.installer.outputs.setup_sha256 }}
+        run: python packaging/windows/smoke_app.py "$env:SETUP" --sha256 "$env:SHA256"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-app
           path: |
             dist-exe/*.zip
             dist-exe/*.zip.sha256
+            dist-exe/*-setup.exe
+            dist-exe/*-setup.exe.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -89,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write # upload the zip to the draft release
+      contents: write # upload the zip and the installer to the draft release
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -102,16 +125,24 @@ jobs:
           TAG: ${{ inputs.tag }}
           ZIP: ${{ needs.build.outputs.zip }}
           SHA256: ${{ needs.build.outputs.sha256 }}
+          SETUP: ${{ needs.build.outputs.setup }}
+          SETUP_SHA256: ${{ needs.build.outputs.setup_sha256 }}
         run: |
           set -euo pipefail
-          if [ "$ZIP" != "Datakrit-${TAG#v}-windows-x64.zip" ]; then
-            echo "::error::unexpected zip name $ZIP for $TAG"
+          version="${TAG#v}"
+          if [ "$ZIP" != "Datakrit-$version-windows-x64.zip" ] ||
+             [ "$SETUP" != "Datakrit-$version-windows-x64-setup.exe" ]; then
+            echo "::error::unexpected file names $ZIP and $SETUP for $TAG"
             exit 1
           fi
-          echo "$SHA256  $ZIP" | sha256sum --check --strict
-          # Exactly one LF-terminated line: older sha256sum and shasum fail on a CR.
-          printf '%s  %s\n' "$SHA256" "$ZIP" | cmp - "$ZIP.sha256"
-          sha256sum --check --strict "$ZIP.sha256"
+          check_file() {
+            echo "$2  $1" | sha256sum --check --strict
+            # Exactly one LF-terminated line: older sha256sum and shasum fail on a CR.
+            printf '%s  %s\n' "$2" "$1" | cmp - "$1.sha256"
+            sha256sum --check --strict "$1.sha256"
+          }
+          check_file "$ZIP" "$SHA256"
+          check_file "$SETUP" "$SETUP_SHA256"
           # Drafts are listed only for accounts that can push, as this job's token can.
           gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
             --jq '.[] | select(.tag_name == env.TAG)' > release.json
@@ -119,11 +150,16 @@ jobs:
             echo "::error::$TAG has no draft release; create the draft first (docs/RELEASE.md)"
             exit 1
           fi
-          gh release upload "$TAG" "$ZIP" "$ZIP.sha256" --repo "$GITHUB_REPOSITORY"
-          gh api "repos/$GITHUB_REPOSITORY/releases/$(jq -s '.[0].id' release.json)" \
-            --jq '.assets[] | select(.name == env.ZIP) | .digest' > digest.txt
-          if [ "$(cat digest.txt)" != "sha256:$SHA256" ]; then
-            echo "::error::GitHub reports $(cat digest.txt) for $ZIP, not sha256:$SHA256"
-            exit 1
-          fi
-          echo "Attached $ZIP (sha256:$SHA256) to the draft release of $TAG."
+          gh release upload "$TAG" "$ZIP" "$ZIP.sha256" "$SETUP" "$SETUP.sha256" \
+            --repo "$GITHUB_REPOSITORY"
+          id="$(jq -s '.[0].id' release.json)"
+          for pair in "$ZIP:$SHA256" "$SETUP:$SETUP_SHA256"; do
+            name="${pair%%:*}" hash="${pair##*:}"
+            digest="$(NAME="$name" gh api "repos/$GITHUB_REPOSITORY/releases/$id" \
+              --jq '.assets[] | select(.name == env.NAME) | .digest')"
+            if [ "$digest" != "sha256:$hash" ]; then
+              echo "::error::GitHub reports $digest for $name, not sha256:$hash"
+              exit 1
+            fi
+            echo "Attached $name (sha256:$hash) to the draft release of $TAG."
+          done

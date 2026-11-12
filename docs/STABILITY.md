@@ -10,7 +10,7 @@ first draft of the inventory raised; the changes they required were made in 1.0.
 a migration note in the [changelog](../CHANGELOG.md#100---2026-11-04). 2.0.0 gave the product
 its current name and removed the aliases deprecated in 1.0.0 (see
 [The rename to Datakrit in 2.0.0](#the-rename-to-datakrit-in-200)). The inventory below
-describes 2.1.1, which added distribution channels and changed nothing in it.
+describes 2.2.0; 2.1.1 and 2.2.0 added distribution channels and changed nothing in it.
 
 ## What Semantic Versioning covers
 
@@ -106,7 +106,8 @@ when users would notice:
   and names that start with `_`), unless this document lists them.
 - The order of keys inside JSON objects, and whitespace in JSON.
 - The temporary files of the local interface and the `datakrit-ui-error.txt` file.
-- The Windows app's look (it is the local interface) and its packaging: the folder layout,
+- The Windows app's look (it is the local interface), its window (an app window of Edge or
+  Chrome), the installer's pages, folders, and shortcuts, and its packaging: the folder layout,
   the bundled Python and its version, the files next to `Datakrit.exe`, the zip's size, and
   the smoke mode (`DATAKRIT_UI_URL_FILE`), which exists for automated checks.
 
@@ -118,14 +119,16 @@ From 2.1.1 every release is published as:
   GitHub release, each with a published SHA-256 (`datakrit update` relies on the wheel);
 - the same two files on PyPI, as the project `datakrit` (`pip install datakrit`);
 - the Windows app `Datakrit-X.Y.Z-windows-x64.zip` with `Datakrit-X.Y.Z-windows-x64.zip.sha256`
-  on the GitHub release: a folder `Datakrit` whose `Datakrit.exe` starts the local interface.
+  on the GitHub release: a folder `Datakrit` whose `Datakrit.exe` starts the local interface;
+- from 2.2.0, the installer of that app, `Datakrit-X.Y.Z-windows-x64-setup.exe` with
+  `Datakrit-X.Y.Z-windows-x64-setup.exe.sha256`, on the GitHub release.
 
 Removing one of these channels is announced in the changelog of a minor release first. The
 app has no command line; the programs covered above are those of a pip install.
 
 ## Inventory of the covered surface
 
-This inventory describes Datakrit 2.1.1. Details and examples are in
+This inventory describes Datakrit 2.2.0. Details and examples are in
 [CONFIGURATION.md](CONFIGURATION.md) (behavior) and [ARCHITECTURE.md](ARCHITECTURE.md)
 (result types).
 

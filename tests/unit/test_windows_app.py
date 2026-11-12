@@ -169,3 +169,79 @@ def test_the_checksum_file_is_one_lf_line(tmp_path):
     checksum.write_bytes(line.replace(b"\n", b"\r\n"))
     with pytest.raises(smoke.SmokeError, match="LF"):
         smoke.check_sha256_file(zip_path, digest)
+
+
+def test_the_installer_installs_per_user_and_matches_its_checks(monkeypatch, tmp_path):
+    monkeypatch.syspath_prepend(str(WINDOWS))
+    installer, smoke = load("build_installer"), load("smoke_app")
+    from datakrit import update
+
+    script = (WINDOWS / "datakrit.iss").read_text(encoding="utf-8")
+    app_id = re.search(r"^AppId=\{\{([0-9A-F-]{36})\}$", script, re.M)
+    assert app_id and f"{{{app_id.group(1)}}}_is1" in smoke.UNINSTALL_KEY
+    assert "PrivilegesRequired=lowest" in script and r"DefaultDirName={autopf}\Datakrit" in script
+    assert "OutputBaseFilename=Datakrit-{#AppVersion}-windows-x64-setup" in script
+    assert r'Name: "{autoprograms}\Datakrit"' in script and "Tasks: desktopicon" in script
+    assert r'Type: filesandordirs; Name: "{app}\_internal"' in script
+    name = installer.SETUP.format(version="2.2.0")
+    assert name == "Datakrit-2.2.0-windows-x64-setup.exe"
+    assert update.APP_SETUP.format(version="2.2.0") == name and name.endswith("-setup.exe")
+
+    command = installer.iscc_command(Path("ISCC.exe"), "2.2.0", tmp_path / "src", tmp_path)
+    assert command[1:5] == [
+        "/Qp",
+        "/DAppVersion=2.2.0",
+        f"/DSourceDir={tmp_path / 'src'}",
+        f"/DOutputDir={tmp_path}",
+    ]
+    assert command[-1] == str(WINDOWS / "datakrit.iss")
+
+    iscc = tmp_path / "Inno Setup 6" / "ISCC.exe"
+    iscc.parent.mkdir()
+    iscc.write_bytes(b"MZ")
+    monkeypatch.setattr(installer.shutil, "which", lambda name: None)
+    assert installer.find_iscc(None, {"ProgramFiles(x86)": str(tmp_path)}) == iscc
+    assert installer.find_iscc(str(iscc), {}) == iscc
+    with pytest.raises(SystemExit, match=r"ISCC\.exe"):
+        installer.find_iscc(None, {})
+
+
+def test_the_installer_check_reads_folders_with_spaces(monkeypatch):
+    smoke = load("smoke_app")
+    listing = "C:\\Users\\a b\\Start Menu\\Programs\r\nC:\\Users\\a b\\Desktop\r\n"
+    monkeypatch.setattr(smoke, "powershell", lambda script: listing)
+    # Joined as the smoke test joins them, so that the test also runs where "\" is no separator.
+    assert smoke.shortcuts() == [
+        Path("C:\\Users\\a b\\Start Menu\\Programs") / "Datakrit.lnk",
+        Path("C:\\Users\\a b\\Desktop") / "Datakrit.lnk",
+    ]
+
+
+def test_a_failed_installer_check_uninstalls_what_it_installed(monkeypatch, tmp_path):
+    smoke = load("smoke_app")
+    setup = tmp_path / "Datakrit-2.2.0-windows-x64-setup.exe"
+    setup.write_bytes(b"MZ")
+    removed = []
+    monkeypatch.setattr(smoke, "uninstall", lambda folder, timeout: removed.append(folder))
+
+    def broken(setup, target, work, timeout):
+        raise smoke.SmokeError("a check after the installer ran failed")
+
+    monkeypatch.setattr(smoke, "install", broken)
+    monkeypatch.setattr(smoke, "registered", lambda: False)
+    assert smoke.main([str(setup)]) == 1
+    assert len(removed) == 1 and removed[0].name == "installed"
+    # Where Datakrit is installed already, the check stops and removes nothing.
+    monkeypatch.setattr(smoke, "registered", lambda: True)
+    assert smoke.main([str(setup)]) == 1
+    assert len(removed) == 1
+
+
+def test_releases_before_2_2_0_have_no_installer():
+    from datakrit import update
+
+    def release(version):
+        return update.Release(version, "", "", "", "")
+
+    assert update.app_setup(release("2.1.1")) is None
+    assert update.app_setup(release("2.2.0")) == "Datakrit-2.2.0-windows-x64-setup.exe"

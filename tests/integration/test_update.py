@@ -193,7 +193,7 @@ def test_fetch_json_reports_the_address_after_redirects(monkeypatch):
     assert final == "https://api.github.com/repositories/1/releases/latest"
     assert data == {"tag_name": "v2.0.0"}
     assert seen == [(LATEST, f"datakrit/{__version__}", 30)]
-    assert __version__ == "2.1.1"
+    assert __version__ == "2.2.0"
 
 
 @pytest.mark.parametrize(
@@ -368,7 +368,7 @@ def test_a_pip_install_is_not_frozen():
     assert not getattr(sys, "frozen", False) and not update.frozen()
 
 
-def test_the_windows_app_reports_the_zip_and_never_runs_pip(github, pip, frozen):
+def test_the_windows_app_reports_the_installer_and_never_runs_pip(github, pip, frozen):
     answers, asked = github
     _, calls = pip
     answers[LATEST] = release_json("9.9.9")
@@ -378,9 +378,10 @@ def test_the_windows_app_reports_the_zip_and_never_runs_pip(github, pip, frozen)
         assert result.code == 0, result.err
         assert result.out.splitlines() == [
             f"Installed: Datakrit {__version__} (Windows app). Latest release: 9.9.9.",
-            f"Download Datakrit-9.9.9-windows-x64.zip from {page}, check its SHA-256 against "
-            "the release notes, and replace the Datakrit folder with the one in the zip. The "
-            "Windows app does not update itself; nothing was installed.",
+            f"Download Datakrit-9.9.9-windows-x64-setup.exe from {page}, check its SHA-256 "
+            "against the release notes, and run it: it updates the installed app. For the app "
+            "from the zip, download Datakrit-9.9.9-windows-x64.zip and replace the Datakrit "
+            "folder. The Windows app does not update itself; nothing was installed.",
         ]
     assert asked == [LATEST, LATEST] and calls == []
 
@@ -395,6 +396,8 @@ def test_the_windows_app_up_to_date_and_chosen_versions(github, pip, frozen):
     if __version__ != "2.0.0":
         chosen = run_cli("update", "--version", "2.0.0")
         assert chosen.code == 0 and "Download Datakrit-2.0.0-windows-x64.zip" in chosen.out
+        # Releases before 2.2.0 have no installer.
+        assert "setup.exe" not in chosen.out
     answers[LATEST] = OSError("offline")
     offline = run_cli("update")
     assert offline.code == 2 and "could not reach GitHub" in offline.err

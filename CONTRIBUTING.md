@@ -55,8 +55,9 @@ appear in the repository's Security tab.
 
 ## Building the Windows app
 
-The Windows app (`Datakrit-X.Y.Z-windows-x64.zip`, see the README) is built from
-`packaging/windows/` with PyInstaller. Its build tools are not dependencies of Datakrit:
+The Windows app (`Datakrit-X.Y.Z-windows-x64-setup.exe` and
+`Datakrit-X.Y.Z-windows-x64.zip`, see the README) is built from `packaging/windows/` with
+PyInstaller, and its installer with Inno Setup 6. Its build tools are not dependencies of Datakrit:
 they are pinned with hashes in `constraints-exe.txt` and installed into a separate virtual
 environment. On 64-bit Windows with a 64-bit Python 3.11 or newer (CI uses the newest
 supported Python), from the repository root:
@@ -66,8 +67,13 @@ py -3 -m venv build\venv-exe
 .\build\venv-exe\Scripts\python.exe -m pip install --require-hashes -r constraints-exe.txt
 .\build\venv-exe\Scripts\python.exe -m pip install --no-deps .
 .\build\venv-exe\Scripts\python.exe packaging\windows\build_app.py
-.\build\venv-exe\Scripts\python.exe packaging\windows\smoke_app.py dist-exe\Datakrit-X.Y.Z-windows-x64.zip
+.\build\venv-exe\Scripts\python.exe packaging\windows\smoke_app.py dist-exe\Datakrit-X.Y.Z-windows-x64.zip --window
+.\build\venv-exe\Scripts\python.exe packaging\windows\build_installer.py
+.\build\venv-exe\Scripts\python.exe packaging\windows\smoke_app.py dist-exe\Datakrit-X.Y.Z-windows-x64-setup.exe
 ```
+
+The last two need [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`ISCC.exe` in its
+usual folder, on the `PATH`, or given with `--iscc`).
 
 `build\` and `dist-exe\` are ignored by Git.
 
@@ -85,9 +91,19 @@ py -3 -m venv build\venv-exe
   file instead of opening a browser. The script fetches the page and every file of the page
   with the session key, checks that requests without the key are refused, presses Quit, and
   checks that the program exits with code 0. For `Datakrit.exe` and the zip it first checks
-  the `licenses` folder. It prints the start-up time.
-- The `Windows app` workflow does the same on every pull request and keeps the zip as a
-  workflow artifact for 14 days; release builds are described in
+  the `licenses` folder. With `--window` it also starts the app normally, finds its Edge (or
+  Chrome) app window, runs the same checks against it, presses Quit, and closes a second
+  window, checking that the app ends each time; Edge windows open briefly on the screen. For
+  the installer it installs Datakrit for the current user into a temporary folder (with the
+  Desktop icon), checks the files, shortcuts, and the Settings > Apps entry, runs the checks
+  on the installed app, and uninstalls it again; it refuses to run where Datakrit is
+  installed for the current user. It prints the start-up time.
+- `build_installer.py` compiles `packaging/windows/datakrit.iss` (per-user install, no
+  administrator rights, Start Menu and optional Desktop shortcut, uninstaller) into
+  `dist-exe/Datakrit-X.Y.Z-windows-x64-setup.exe` and its `.sha256` file. Never change the
+  `AppId` in `datakrit.iss`: it ties the versions together.
+- The `Windows app` workflow does the same on every pull request (Inno Setup 6 comes with
+  the runner image) and keeps the zip and the installer as a workflow artifact for 14 days; release builds are described in
   [docs/RELEASE.md](docs/RELEASE.md).
 - To update PyInstaller, change its version and the versions of the packages it needs in
   `constraints-exe.txt`, list the SHA-256 of every file PyPI publishes for each version, and

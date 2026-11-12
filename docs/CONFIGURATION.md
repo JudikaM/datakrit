@@ -330,8 +330,10 @@ unusable, pip fails (the installed version is kept), or the version asked for is
 In the [Windows app](#windows-app) (a frozen program, `sys.frozen`), `update` never runs
 pip: there is none, and the app cannot replace its own folder. It looks up the release as in
 step 1 and 2, then reports the installed version, the release, and, when that release is
-newer (or was asked for with `--version`), the zip `Datakrit-X.Y.Z-windows-x64.zip` and the
-release page to download it from (exit code 0; 2 when GitHub cannot be reached).
+newer (or was asked for with `--version`), the release page to download from: the
+installer `Datakrit-X.Y.Z-windows-x64-setup.exe` (releases from 2.2.0), which updates the
+installed app, and the zip `Datakrit-X.Y.Z-windows-x64.zip` for the app used without
+installing (exit code 0; 2 when GitHub cannot be reached).
 
 ## Batch processing
 
@@ -513,19 +515,34 @@ from a server bound to `127.0.0.1` and opens it in the default browser.
 
 ## Windows app
 
-`Datakrit-X.Y.Z-windows-x64.zip`, attached to every release from 2.1.1 on, holds the folder
-`Datakrit` with `Datakrit.exe` and its files, for 64-bit Windows. It needs no Python.
+The app for 64-bit Windows 10 and 11 needs no Python. Every release from 2.2.0 on carries
+the installer `Datakrit-X.Y.Z-windows-x64-setup.exe`; every release from 2.1.1 on carries
+`Datakrit-X.Y.Z-windows-x64.zip`, the same app as the folder `Datakrit` with
+`Datakrit.exe` and its files.
 
-- `Datakrit.exe` starts the local interface only, exactly like `datakrit-ui`: no console
-  window, the browser opens, the server stops with **Quit** or by itself 10 minutes after
-  the page last contacted it, start-up problems go to `datakrit-ui-error.txt` in the
-  temporary folder, and the smoke mode above works the same. It takes no arguments and has
-  no command line; the `datakrit` command and the Python API come with a pip install.
+- **The installer** installs for the current Windows user only, without administrator
+  rights, into `%LOCALAPPDATA%\Programs\Datakrit` (another folder can be chosen). It adds
+  **Datakrit** to the Start Menu and, when its box is ticked, to the Desktop, and registers
+  Datakrit under **Settings > Apps**, where it is uninstalled. An installer of a newer
+  version replaces the installed one (an open Datakrit is closed first). The Start Menu
+  shortcut is named like the one that `datakrit shortcut install` makes for a pip install;
+  where both exist, the installer's replaces it.
+- **Its own window.** `Datakrit.exe` starts the local interface only and shows it in an app
+  window of Microsoft Edge (or Google Chrome when Edge is missing): no tabs, no address
+  bar, and a private profile in a new temporary folder, removed when the window closes.
+  Closing the window stops the app; **Quit** on the page, or the stop 10 minutes after the
+  page last contacted the app, closes the window. When neither browser is found, or the
+  window does not open within 15 seconds, the page opens in the default browser, and the
+  app behaves like `datakrit-ui`. Start-up problems go to `datakrit-ui-error.txt` in the
+  temporary folder, and the smoke mode above works the same (it opens no window). The app
+  takes no arguments and has no command line; the `datakrit` command and the Python API
+  come with a pip install.
 - The page, its results, downloads, and the profiles it reads and writes are those of
   `datakrit ui` of the same version. Temporary copies go to the temporary folder; nothing is
   written into the app's folder.
-- **Updates.** The app does not update itself: download the zip of the new release, check
-  its SHA-256, and replace the `Datakrit` folder. Profiles keep working. Inside the app,
+- **Updates.** The app does not update itself: download the installer of the new release,
+  check its SHA-256, and run it (or, for the zip, replace the `Datakrit` folder). Profiles
+  keep working. Inside the app,
   `update` only reports the release (see [Updates](#updates)), and shortcuts are not offered
   (see [Shortcuts](#shortcuts)).
 - The app is not code-signed; see [SECURITY.md](../SECURITY.md#verifying-downloads) for

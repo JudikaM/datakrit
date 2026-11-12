@@ -30,7 +30,7 @@ import time
 import tomllib
 import webbrowser
 import zipfile
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, TypeVar, cast
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from . import __version__
+from . import __version__, appwindow
 from .api import CheckResult, CleanResult, check_file, clean_file, export_clean
 from .batch import BatchInput, BatchResult, batch_report, render_batch_text, run_batch
 from .errors import DatakritError, ProfileError
@@ -835,10 +835,15 @@ def run_ui(
     idle_minutes: float = 0,
     quiet: bool = False,
     url_file: Path | None = None,
+    window: Callable[[str], appwindow.AppWindow | None] | None = None,
 ) -> int:
     """Serve the interface until the page's Quit button or Ctrl+C stops it, or, with
     ``idle_minutes``, until the page has not been in contact for that long. With
-    ``url_file``, the page address is also written to that file before serving starts."""
+    ``url_file``, the page address is also written to that file before serving starts.
+
+    With ``window`` (the Windows app), the page opens in the window that it starts: closing
+    that window stops the server, and stopping the server closes the window. When no window
+    starts, the default browser opens the page."""
     server, session, url = create_server(port, max_file_mb)
     _say("Datakrit is running on this computer only (nothing is sent to the internet).", quiet)
     _say(f"Open this address in your browser:\n\n  {url}\n", quiet)
@@ -846,9 +851,16 @@ def run_ui(
     if idle_minutes > 0:
         start_idle_watch(server, session, idle_minutes * 60)
         _say(f"It also stops by itself after {idle_minutes:g} minutes without an open page.", quiet)
+    opened: appwindow.AppWindow | None = None
     if open_browser:
-        with contextlib.suppress(Exception):
-            webbrowser.open(url)
+        if window is not None:
+            with contextlib.suppress(Exception):
+                opened = window(url)
+        if opened is None:
+            with contextlib.suppress(Exception):
+                webbrowser.open(url)
+        else:
+            _follow_window(opened, server, url)
     try:
         if url_file is not None:
             _write_url(url_file, url)
@@ -856,10 +868,30 @@ def run_ui(
     except KeyboardInterrupt:
         pass
     finally:
+        if opened is not None:
+            opened.close()
         server.server_close()
         session.close()
     _say("Datakrit stopped. Temporary copies were removed.", quiet)
     return 0
+
+
+def _follow_window(
+    opened: appwindow.AppWindow, server: ThreadingHTTPServer, url: str
+) -> threading.Thread:
+    """Stop ``server`` when the window is closed. A window that never opened sends the page
+    to the default browser instead, and the server keeps running."""
+
+    def follow() -> None:
+        if not opened.wait():
+            with contextlib.suppress(Exception):
+                webbrowser.open(url)
+            return
+        server.shutdown()
+
+    thread = threading.Thread(target=follow, name="datakrit-window", daemon=True)
+    thread.start()
+    return thread
 
 
 def _write_url(path: Path, url: str) -> None:
@@ -871,9 +903,11 @@ def _write_url(path: Path, url: str) -> None:
 
 def gui_main() -> int:
     """Entry point of the ``datakrit-ui`` program and of the Windows app: no console window,
-    the browser opens, and the server stops by itself when the page is no longer open. A
-    start-up problem is written to ``datakrit-ui-error.txt`` in the temporary folder, as there
-    is no window to show it. See ``URL_FILE_VARIABLE`` for the smoke mode."""
+    the browser opens, and the server stops by itself when the page is no longer open. The
+    Windows app (a frozen program) shows the page in its own window instead (see
+    ``appwindow``). A start-up problem is written to ``datakrit-ui-error.txt`` in the
+    temporary folder, as there is no window to show it. See ``URL_FILE_VARIABLE`` for the
+    smoke mode, which opens no window."""
     url_file = os.environ.get(URL_FILE_VARIABLE)
     try:
         if url_file:
@@ -884,6 +918,15 @@ def gui_main() -> int:
                 idle_minutes=GUI_IDLE_MINUTES,
                 quiet=True,
                 url_file=Path(url_file),
+            )
+        if getattr(sys, "frozen", False):
+            return run_ui(
+                0,
+                True,
+                DEFAULT_MAX_FILE_MB,
+                idle_minutes=GUI_IDLE_MINUTES,
+                quiet=True,
+                window=appwindow.open_window,
             )
         return run_ui(0, True, DEFAULT_MAX_FILE_MB, idle_minutes=GUI_IDLE_MINUTES, quiet=True)
     except Exception as exc:

@@ -35,6 +35,9 @@ DOWNLOADS = f"https://github.com/{REPOSITORY}/releases/download/"
 RELEASES_PAGE = f"https://github.com/{REPOSITORY}/releases"
 WHEEL = "datakrit-{version}-py3-none-any.whl"
 APP_ZIP = "Datakrit-{version}-windows-x64.zip"
+APP_SETUP = "Datakrit-{version}-windows-x64-setup.exe"
+# The first release with the Windows app's installer.
+FIRST_SETUP_VERSION = "2.2.0"
 # The first Datakrit release; `update --version` refuses anything older.
 FIRST_VERSION = "2.0.0"
 OFFLINE_HINT = (
@@ -76,6 +79,13 @@ def frozen() -> bool:
 def app_zip(release: Release) -> str:
     """The name of the Windows app's zip file on the page of ``release``."""
     return APP_ZIP.format(version=release.version)
+
+
+def app_setup(release: Release) -> str | None:
+    """The name of the Windows app's installer on the page of ``release`` (from 2.2.0)."""
+    if version_key(release.version) < version_key(FIRST_SETUP_VERSION):
+        return None
+    return APP_SETUP.format(version=release.version)
 
 
 def run_pip(command: Sequence[str]) -> int:

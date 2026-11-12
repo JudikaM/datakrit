@@ -839,11 +839,20 @@ def _update(args: argparse.Namespace) -> int:
 
 
 def _report_app_update(release: update.Release, current: str, newer: bool, chosen: bool) -> int:
-    """The Windows app has no pip and cannot replace its own folder: report where the zip
-    of the release is, and install nothing."""
+    """The Windows app has no pip and cannot replace itself: report where the installer
+    (and the zip) of the release are, and install nothing."""
     print(f"Installed: Datakrit {current} (Windows app). Latest release: {release.version}.")
     if release.version == current or (not newer and not chosen):
         print("Datakrit is up to date.")
+        return 0
+    setup = update.app_setup(release)
+    if setup is not None:
+        print(
+            f"Download {setup} from {release.page_url}, check its SHA-256 against the "
+            "release notes, and run it: it updates the installed app. For the app from the "
+            f"zip, download {update.app_zip(release)} and replace the Datakrit folder. The "
+            "Windows app does not update itself; nothing was installed."
+        )
         return 0
     print(
         f"Download {update.app_zip(release)} from {release.page_url}, check its SHA-256 "

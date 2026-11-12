@@ -8,6 +8,36 @@ Datakrit was called CSV Tidy until 1.2.0.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-12
+
+The Windows app becomes a desktop app: an installer, and its own window. Commands,
+options, profiles, reports, and the Python API are unchanged.
+
+**Upgrade notes.** Nothing changes for profiles, CLI, reports, or the Python API. Windows
+app users: run `Datakrit-2.2.0-windows-x64-setup.exe` once; later versions update by running
+their installer. The zip stays available for use without installing. pip installs update as
+before (`datakrit update` or `python -m pip install --upgrade datakrit`).
+
+### Added
+
+- Installer for the Windows app: `Datakrit-X.Y.Z-windows-x64-setup.exe` on each release, made
+  with Inno Setup 6. It installs for the current Windows user only, without administrator
+  rights, into `%LOCALAPPDATA%\Programs\Datakrit`, adds Datakrit to the Start Menu (and, if
+  chosen, to the Desktop), and registers an uninstaller under Settings > Apps. Running the
+  installer of a newer version updates the app. The `windows-app.yml` workflow builds it,
+  installs and uninstalls it in its smoke test, and attaches it with its `.sha256` file;
+  the release notes list its SHA-256. The installer is not code-signed.
+- The Windows app opens in its own window: an app window of Microsoft Edge (or Google Chrome
+  when Edge is missing) with a private, temporary profile, without tabs or an address bar.
+  Closing the window stops the app, and Quit closes the window. Without Edge or Chrome the
+  page opens in the default browser, as before. No library is added to the app.
+- In the Windows app, `update` names the installer of the new release (and the zip).
+
+### Changed
+
+- The smoke test of the Windows app (`packaging/windows/smoke_app.py`) also checks the app
+  window (`--window`) and the installer (install, run, uninstall).
+
 ## [2.1.1] - 2026-11-05
 
 The first release with PyPI and the Windows app: it contains everything listed under 2.1.0,

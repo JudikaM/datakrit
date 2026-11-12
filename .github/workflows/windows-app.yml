@@ -78,11 +78,14 @@ jobs:
         run: python packaging/windows/smoke_app.py "$env:ZIP" --sha256 "$env:SHA256" --window
       - name: Check the Inno Setup compiler of the runner image
         # The runner image ships Inno Setup 6 (ISCC.exe); the installer script needs 6.x.
-        shell: bash
+        # Its version is read from the file: `ISCC /?` exits with 1 even when it works.
         run: |
-          iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
-          test -f "$iscc" || { echo "::error::Inno Setup 6 is not installed on the runner"; exit 1; }
-          "$iscc" /? | head -n 2
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $iscc -PathType Leaf)) {
+            Write-Output "::error::Inno Setup 6 is not installed on the runner"
+            exit 1
+          }
+          Write-Output "Inno Setup $((Get-Item -LiteralPath $iscc).VersionInfo.ProductVersion)"
       - name: Build the installer
         id: installer
         run: python packaging/windows/build_installer.py --iscc "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"

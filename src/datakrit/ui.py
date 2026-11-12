@@ -23,6 +23,7 @@ import os
 import secrets
 import shutil
 import socket
+import socketserver
 import sys
 import tempfile
 import threading
@@ -773,7 +774,9 @@ class Handler(BaseHTTPRequestHandler):
 class LocalServer(ThreadingHTTPServer):
     """The loopback server. Its port is never shared: on Windows ``SO_REUSEADDR`` would let a
     second server bind a port that a running one uses (and requests would keep going to the
-    first), so the port is claimed exclusively there and address reuse is off."""
+    first), so the port is claimed exclusively there and address reuse is off. The server's
+    name is its loopback address: ``HTTPServer`` would ask the resolver for that address's
+    name, which can take half a minute on some computers."""
 
     allow_reuse_address = os.name != "nt"
     daemon_threads = True
@@ -782,7 +785,10 @@ class LocalServer(ThreadingHTTPServer):
         exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
         if exclusive is not None:
             self.socket.setsockopt(socket.SOL_SOCKET, exclusive, 1)
-        super().server_bind()
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = str(host)
+        self.server_port = int(port)
 
 
 def create_server(

@@ -1171,6 +1171,25 @@ def test_a_second_server_cannot_share_the_port_of_a_running_one():
         session.close()
 
 
+def test_the_server_starts_without_looking_up_a_host_name(monkeypatch):
+    """The standard HTTPServer asks the resolver for the loopback address's name, which can
+    take half a minute on some computers (it did on macOS runners)."""
+    import socket
+
+    def no_lookup(*args):
+        raise AssertionError("the server must not look up a host name")
+
+    monkeypatch.setattr(socket, "getfqdn", no_lookup)
+    server, session, url = create_server(0)
+    try:
+        assert server.server_name == "127.0.0.1"
+        assert server.server_port == server.server_address[1]
+        assert url.startswith(f"http://127.0.0.1:{server.server_port}/?token=")
+    finally:
+        server.server_close()
+        session.close()
+
+
 # ------------------------------------------------------------- stored choices (migration)
 # Datakrit was called CSV Tidy until 1.2.0, which kept the theme, side-bar, and "How to use"
 # choices under csv-tidy-* keys. theme.js (before the first paint) and app.js move a choice

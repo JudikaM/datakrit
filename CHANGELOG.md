@@ -38,6 +38,11 @@ before (`datakrit update` or `python -m pip install --upgrade datakrit`).
 - The smoke test of the Windows app (`packaging/windows/smoke_app.py`) also checks the app
   window (`--window`) and the installer (install, run, uninstall).
 
+### Fixed
+
+- The local interface starts without asking the resolver for the name of `127.0.0.1`, which
+  could delay its start by half a minute on some computers (macOS among them).
+
 ## [2.1.1] - 2026-11-05
 
 The first release with PyPI and the Windows app: it contains everything listed under 2.1.0,

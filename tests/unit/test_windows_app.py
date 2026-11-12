@@ -210,9 +210,10 @@ def test_the_installer_check_reads_folders_with_spaces(monkeypatch):
     smoke = load("smoke_app")
     listing = "C:\\Users\\a b\\Start Menu\\Programs\r\nC:\\Users\\a b\\Desktop\r\n"
     monkeypatch.setattr(smoke, "powershell", lambda script: listing)
+    # Joined as the smoke test joins them, so that the test also runs where "\" is no separator.
     assert smoke.shortcuts() == [
-        Path("C:\\Users\\a b\\Start Menu\\Programs\\Datakrit.lnk"),
-        Path("C:\\Users\\a b\\Desktop\\Datakrit.lnk"),
+        Path("C:\\Users\\a b\\Start Menu\\Programs") / "Datakrit.lnk",
+        Path("C:\\Users\\a b\\Desktop") / "Datakrit.lnk",
     ]
 
 
